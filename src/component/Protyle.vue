@@ -1,43 +1,72 @@
-<template>
-  <div :id="divId"></div>
-  <div>AAA</div>
-</template>
+<template></template>
 <script lang="ts" setup>
-import { onUnmounted, onMounted, ref } from "vue";
-import { Protyle } from "siyuan";
-
+import { onUpdated } from "vue";
+import { openTab, showMessage } from "siyuan";
+import { type Data } from "../VueApp.vue";
+import {
+  buildParaBlock,
+  buildSuperBlock,
+} from "../../subMod/siyuanPlugin-common/component/blockEle";
+import {
+  insertBlock,
+  updateBlock,
+} from "../../subMod/siyuanPlugin-common/siyuan-api/block";
 const props = defineProps<{
-  blockId: string;
+  data: Data[];
+  docId: string;
 }>();
-const divId = `PluginDiff-${props.blockId}`;
-const html = ref("");
-let protyle: Protyle;
-onMounted(() => {
-  let tempDiv = document.querySelector("#div") as HTMLElement;
-  console.log(tempDiv);
 
-  protyle = new Protyle(window.siyuan.ws.app, tempDiv, {
-    blockId: props.blockId,
-    mode: "wysiwyg",
-    render: {
-      title: false,
-      gutter: false,
-      breadcrumb: false,
-      breadcrumbDocName: false,
+onUpdated(async () => {
+  if (!props.docId) {
+    return;
+  }
+  openTab({
+    app: window.siyuan.ws.app,
+    doc: {
+      id: props.docId,
     },
-    after: async (protyle) => {
-      const content = protyle.protyle.contentElement;
-      if (!content) {
-        return;
+    keepCursor: false,
+    async afterOpen() {
+      let i = 0;
+      const step = 10; //n个一组
+      while (i < props.data.length) {
+        showMessage(`生成比较文档${i}/${props.data.length}`, 3000);
+        const group = props.data.slice(i, i + step);
+        await Promise.all(
+          group.map(async (e) => {
+            if (e.isNoDiff) {
+              return;
+            }
+            const diff = e.diff[0] || buildParaBlock("");
+            const merge = e.merge[0] || buildParaBlock("");
+            let superBlock = buildSuperBlock("col", [
+              e.sourceEle.outerHTML,
+              diff.outerHTML,
+              merge.outerHTML,
+            ]);
+            await updateBlock({
+              dataType: "dom",
+              data: superBlock.outerHTML,
+              id: e.duplicateId,
+            });
+            let preId = e.duplicateId;
+            for (let i = 1; i < e.target.length; i++) {
+              superBlock = buildSuperBlock("col", [
+                buildParaBlock("").outerHTML,
+                e.diff[i].outerHTML,
+                e.merge[i].outerHTML,
+              ]);
+              await insertBlock({
+                dataType: "dom",
+                data: superBlock.outerHTML,
+                previousID: preId,
+              });
+              preId = superBlock.getAttribute("data-node-id");
+            }
+          })
+        );
+        i = i + step;
       }
-
-      //按道理讲 protyle 已经加载完成，但是加载符号仍然存在，这里等待一点时间
-      await sleep(500);
-      const wysiwyg = content.querySelector(".protyle-wysiwyg") as HTMLElement;
-      if (wysiwyg) {
-        wysiwyg.setAttribute("style", "padding: 1px 1px 1px 1px !important;");
-      }
-      html.value = content.outerHTML;
     },
   });
 });
@@ -47,8 +76,4 @@ function sleep(time: number) {
     setTimeout(resolve, time);
   });
 }
-
-onUnmounted(() => {
-  protyle.destroy();
-});
 </script>

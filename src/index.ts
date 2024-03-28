@@ -1,9 +1,8 @@
-import { Plugin, openTab } from "siyuan";
+import { Menu, Plugin } from "siyuan";
 import { createApp, type App } from "vue";
 import VueApp from "./VueApp.vue";
 import ElementPlus from "element-plus";
 const STORAGE_NAME = "menu-config";
-const TAB_TYPE = "custom_tab";
 //const DOCK_TYPE = "dock_tab";
 
 export default class PluginDiff extends Plugin {
@@ -16,46 +15,26 @@ export default class PluginDiff extends Plugin {
       ></path>
     </svg>
   </symbol>`);
-    let vueApp: App<Element>;
-    this.addTab({
-      type: TAB_TYPE,
-      init() {
-        this.element.innerHTML = `<div id="plugin-diff-app">/div>`;
-        vueApp = createApp(VueApp);
-        vueApp.use(ElementPlus);
-        vueApp.mount("#plugin-diff-app");
-        //console.log("init");
-      },
-      beforeDestroy() {
-        vueApp.unmount();
-        //console.log("before destroy tab:", TAB_TYPE);
-      },
-      destroy() {
-        //console.log("destroy tab:", TAB_TYPE);
-      },
-      update() {
-        console.log("update", TAB_TYPE);
-      },
-    });
     console.log(this.i18n.helloPlugin);
   }
 
   onLayoutReady() {
     // this.loadData(STORAGE_NAME);
-    const topBarElement = this.addTopBar({
+    let vueApp: App<Element>;
+    const ele = document.createElement("div");
+    vueApp = createApp(VueApp);
+    vueApp.use(ElementPlus);
+    vueApp.mount(ele);
+    this.addTopBar({
       icon: "iconDiff",
       title: "文档差异比较与合并",
       position: "right",
-      callback: async () => {
-        const tab = await openTab({
-          app: this.app,
-          custom: {
-            icon: "iconDiff",
-            title: "文档差异比较与合并",
-            data: {},
-            id: this.name + TAB_TYPE,
-          },
+      callback: async (event) => {
+        const menu = new Menu("PluginDiff");
+        menu.addItem({
+          element: ele,
         });
+        menu.open({ x: event.x, y: event.y });
       },
     });
   }
