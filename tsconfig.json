@@ -27,7 +27,7 @@
      */
     "allowJs": true,
     "checkJs": true,
-    "types": ["node", "vite/client", "vue"],
+    "types": ["node", "vite/client", "vue", "siyuan"],
     // "baseUrl": "./src",
     "paths": {
       "@/*": ["./src/*"],
@@ -46,5 +46,6 @@
       "path": "./tsconfig.node.json"
     }
   ],
-  "root": "."
+  "root": ".",
+  "ts-node": { "esm": true } //测试使用
 }

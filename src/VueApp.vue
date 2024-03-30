@@ -1,5 +1,4 @@
 <template>
-  <!--<Protyle blockId="20240326205051-c8uzljf"></Protyle>-->
   <el-form
     :model="form"
     label-width="auto"
@@ -38,6 +37,8 @@ import {
 import { BlockId } from "../subMod/siyuanPlugin-common/types/siyuan-api";
 import { queryBlockById } from "../subMod/siyuanPlugin-common/siyuan-api/query";
 import * as Diff from "diff";
+import { DiffDom, Token, type DomChange } from "./diffDom";
+
 const docId = ref("");
 export type Data = {
   source: BlockId;
@@ -94,7 +95,10 @@ const isSameLine = (
   }, 0);
   return diffCount < length / 2;
 };
-const buildMerge = (diffs: Diff.Change[]) => {
+/**
+ * 保留旧的span标签，其他全部新增
+ */
+const buildMerge = (diffs: DomChange[]) => {
   const div = document.createElement("div");
   let innerHTML = "";
   for (let diff of diffs) {
@@ -102,18 +106,20 @@ const buildMerge = (diffs: Diff.Change[]) => {
     if (diff.added) {
       html = diff.value;
     } else if (diff.removed) {
-      //只保留标签，不保留文本
-      if ((diff.count || 0) < diff.value.length) {
-        const spans = diff.value.match(/<\/?[A-Z]{1,}.*?>/g);
-        if (spans) {
-          html = spans.reduce((pre, cur) => {
-            //不保留块标识
-            if (cur.search("data-node-id") !== -1) {
-              return pre;
-            } else {
-              return pre + cur;
-            }
-          }, "");
+      //保留span标签及其内部属性
+      let spanStart = false;
+      for (let token of diff.objValue) {
+        if (token.type === "startTag" && token.value === "<SPAN") {
+          spanStart = true;
+        }
+        if (spanStart) {
+          html += token.value;
+        }
+        if (token.type === "startTagEnd" && token.value === ">" && spanStart) {
+          spanStart = false;
+        }
+        if (token.type === "endTag" && token.value === "</SPAN>") {
+          html += token.value;
         }
       }
     } else {
@@ -125,65 +131,112 @@ const buildMerge = (diffs: Diff.Change[]) => {
   const child = div.firstChild as HTMLElement;
   return child;
 };
+//todo 删除
 const insStyle = `background-color: var(--b3-card-success-background); color: var(--b3-card-success-color);`;
 const delStyle = `background-color: var(--b3-card-error-background); color: var(--b3-card-error-color);`;
-const buildDiff = (diffs: Diff.Change[]) => {
+/**
+ * 生成差异，标签全部用新的，文字显示差异
+ * - div中不允许插入span
+ * - 原有span中不允许插入span
+ * @param diffs
+ */
+const buildDiff = (diffs: DomChange[]) => {
   const div = document.createElement("div");
-  let innerHTML = "";
+  let innerHTML: string[] = [];
+  let isDivOpen = false;
+  /**
+   * 加入文本时标记是否在<DIV...>中,是的话不能添加diff标记(<span>)
+   * 该错误一般是由零宽字符导致的，具体发生原因尚不明朗
+   * @param token
+   */
+  const switchIsDivOpen = (token: Token) => {
+    if (token.type === "startTag") {
+      isDivOpen = true;
+    }
+    if (token.type === "startTagEnd") {
+      isDivOpen = false;
+    }
+  };
   for (let diff of diffs) {
-    //处理含有标签的节点
-    if ((diff.count || 0) < diff.value.length) {
-      if (diff.removed) {
-        if (diff.count && diff.count > 1) {
-          innerHTML += `<span style="${delStyle}">${diff.value.replace(
-            /<\/?[A-Z]{1,}.*?>/g,
-            ""
-          )}</span>`;
-        }
-      } else {
-        innerHTML += diff.value;
-      }
-      continue;
-    }
     if (diff.added) {
-      innerHTML += `<span style="${insStyle}">${diff.value}</span>`;
-    } else if (diff.removed) {
-      innerHTML += `<span style="${delStyle}">${diff.value}</span>`;
-    } else {
-      innerHTML += `${diff.value}`;
-    }
-  }
-  div.innerHTML = innerHTML;
-  const child = div.firstChild as HTMLElement;
-  return child;
-};
-function tokenize(value: string) {
-  const div = document.createElement("div");
-  div.innerHTML = value;
-  let tokens: string[] = [];
-  for (let child of div.childNodes) {
-    if (child.nodeType === Node.TEXT_NODE && child.textContent) {
-      tokens = tokens.concat(child.textContent.split(""));
-    } else {
-      const child2 = child as Element;
-      const tagSuffix = `</${child2.nodeName}>`;
-      let tagPrefix = ``;
-      for (let attr of child2.attributes) {
-        tagPrefix += ` ${attr.name}="${attr.value}"`;
+      for (let token of diff.objValue) {
+        switchIsDivOpen(token);
+        if (token.type === "text" && !isDivOpen) {
+          innerHTML.push(`<span style="${insStyle}">${token.value}</span>`);
+        } else {
+          innerHTML.push(token.value);
+        }
       }
-      tagPrefix = `<${child2.tagName}${tagPrefix}>`;
-      tokens = tokens.concat(tagPrefix, tokenize(child2.innerHTML), tagSuffix);
+    } else if (diff.removed) {
+      for (let token of diff.objValue) {
+        if (token.type === "text" && !isDivOpen) {
+          innerHTML.push(`<span style="${delStyle}">${token.value}</span>`);
+        }
+      }
+    } else {
+      for (let token of diff.objValue) {
+        switchIsDivOpen(token);
+      }
+      innerHTML.push(`${diff.value}`);
     }
   }
-  return tokens;
-}
+  div.innerHTML = innerHTML.join("");
+  console.log(innerHTML);
+  const child = div.firstChild as HTMLElement;
+  mergeSpan(child);
+  return child;
+  /**
+   * 后处理，将<span>部分1<span>部分2</span>部分3</span>合并
+   * 预期结果<span>部分1<span><span>部分2<span><span>部分3<span>
+   * @param ele
+   */
+  function mergeSpan(ele: Element) {
+    for (let child of ele.children) {
+      if (ele.tagName === "SPAN" && child.tagName === "SPAN") {
+        //改变本级节点
+        changeSpan(child.previousSibling, ele);
+        changeSpan(child, ele);
+        changeSpan(child.nextSibling, ele);
+        //回退迭代
+        //mergeSpan(ele.parentElement)
+      }
+      mergeSpan(child);
+    }
+    if (!ele.textContent && ele.tagName === "SPAN") {
+      ele.remove();
+    }
+  }
+  function changeSpan(child: Element | Node, ele: Element) {
+    if (!child) {
+      return;
+    }
+    let child2: Element;
+    //改变子节点
+    //@ts-ignore
+    if (child.getAttribute) {
+      child2 = child as Element;
+      for (let attr of ele.attributes) {
+        const value = child2.getAttribute(attr.name);
+        child2.setAttribute(attr.name, `${attr.value} ${value || ""}`);
+      }
+    } else {
+      child2 = document.createElement("span");
+      for (let attr of ele.attributes) {
+        child2.setAttributeNode(attr);
+      }
+      child2.parentElement.removeChild(child);
+    }
+    ele.before(child2);
+    return child2;
+  }
+};
+
 const offsetLimit = 20;
 const getId = (div: HTMLElement): BlockId => {
   return div.getAttribute("data-node-id");
 };
 const buildData = (oneList: HTMLElement[], otherList: HTMLElement[]) => {
-  const diffCustom = new Diff.Diff(); //专为HTML（而非innerText）准备的
-  diffCustom.tokenize = tokenize;
+  const diffDom = new DiffDom();
   data.value = [];
   for (let i = 0; i < oneList.length; i++) {
     let diff: Diff.Change[];
@@ -195,18 +248,27 @@ const buildData = (oneList: HTMLElement[], otherList: HTMLElement[]) => {
       m++;
     } while (!sameFlag && otherList[m] && m < offsetLimit);
     if (sameFlag) {
-      const diffHtml = diffCustom.diff(
-        oneList[i].outerHTML,
-        otherList[m - 1].outerHTML
-      );
-      //todo 将属性单独拿出来进行比较
-      const isDiff = diffHtml
-        .filter((e) => {
-          return e.value.search("data-node-id") === -1;
-        })
-        .find((e) => {
-          return e.added || e.removed;
-        });
+      const diffHtml = diffDom.diffDom(oneList[i], otherList[m - 1]);
+      //忽略的属性
+      const unChangeAttr = ["data-node-id", "data-node-index", "updated"];
+      const isDiff = diffHtml.find((e) => {
+        if (!e.added && !e.removed) {
+          return false;
+        }
+        for (let token of e.objValue) {
+          if (token.type === "text") {
+            continue;
+          }
+          if (
+            unChangeAttr.find((e) => {
+              return token.value.startsWith(` ${e}=`);
+            })
+          ) {
+            return true;
+          }
+        }
+        return false;
+      });
       data.value[i] = {
         source: getId(oneList[i]),
         sourceEle: oneList[i],
@@ -252,10 +314,9 @@ const main = async () => {
   const targetBlockList = (await getBlockList(
     form.value.target
   )) as NodeListOf<HTMLElement>;
-
   buildData(Array.from(sourceBlockList), Array.from(targetBlockList));
-  const outputDoc = await duplicateDoc(form.value.source);
   console.log(data.value);
+  const outputDoc = await duplicateDoc(form.value.source);
   const outputBlockList = (await getBlockList(
     outputDoc.id
   )) as NodeListOf<HTMLElement>;

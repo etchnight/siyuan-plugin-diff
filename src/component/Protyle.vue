@@ -1,7 +1,7 @@
 <template></template>
 <script lang="ts" setup>
 import { onUpdated } from "vue";
-import { openTab, showMessage } from "siyuan";
+import { App, openTab, showMessage } from "siyuan";
 import { type Data } from "../VueApp.vue";
 import {
   buildParaBlock,
@@ -11,6 +11,8 @@ import {
   insertBlock,
   updateBlock,
 } from "../../subMod/siyuanPlugin-common/siyuan-api/block";
+import { ISiyuan } from "../../subMod/siyuanPlugin-common/types/global-siyuan";
+declare const siyuan: ISiyuan;
 const props = defineProps<{
   data: Data[];
   docId: string;
@@ -21,7 +23,7 @@ onUpdated(async () => {
     return;
   }
   openTab({
-    app: window.siyuan.ws.app,
+    app: siyuan.ws.app as App,
     doc: {
       id: props.docId,
     },
@@ -44,6 +46,7 @@ onUpdated(async () => {
               diff.outerHTML,
               merge.outerHTML,
             ]);
+            console.log(superBlock.outerHTML)
             await updateBlock({
               dataType: "dom",
               data: superBlock.outerHTML,
@@ -70,10 +73,4 @@ onUpdated(async () => {
     },
   });
 });
-
-function sleep(time: number) {
-  return new Promise(function (resolve) {
-    setTimeout(resolve, time);
-  });
-}
 </script>

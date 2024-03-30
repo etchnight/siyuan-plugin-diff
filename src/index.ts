@@ -1,9 +1,11 @@
 import { Menu, Plugin } from "siyuan";
-import { createApp, type App } from "vue";
+import { createApp } from "vue";
 import VueApp from "./VueApp.vue";
 import ElementPlus from "element-plus";
 const STORAGE_NAME = "menu-config";
 //const DOCK_TYPE = "dock_tab";
+
+declare const siyuan: any;
 
 export default class PluginDiff extends Plugin {
   async onload() {
@@ -17,14 +19,10 @@ export default class PluginDiff extends Plugin {
   </symbol>`);
     console.log(this.i18n.helloPlugin);
   }
-
   onLayoutReady() {
     // this.loadData(STORAGE_NAME);
-    let vueApp: App<Element>;
+    //let vueApp: App<Element>;
     const ele = document.createElement("div");
-    vueApp = createApp(VueApp);
-    vueApp.use(ElementPlus);
-    vueApp.mount(ele);
     this.addTopBar({
       icon: "iconDiff",
       title: "文档差异比较与合并",
@@ -37,6 +35,9 @@ export default class PluginDiff extends Plugin {
         menu.open({ x: event.x, y: event.y });
       },
     });
+    const vueApp = createApp(VueApp);
+    vueApp.use(ElementPlus);
+    vueApp.mount(ele);
   }
 
   async onunload() {
