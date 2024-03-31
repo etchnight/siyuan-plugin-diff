@@ -1,11 +1,12 @@
-import { Menu, Plugin } from "siyuan";
+import { Menu, Plugin, Protyle, showMessage } from "siyuan";
 import { createApp } from "vue";
 import VueApp from "./VueApp.vue";
 import ElementPlus from "element-plus";
+import { getBlockAttrs } from "../subMod/siyuanPlugin-common/siyuan-api/attr";
+import { updateBlock } from "../subMod/siyuanPlugin-common/siyuan-api/block";
+import { NodeType } from "../subMod/siyuanPlugin-common/types/siyuan-api";
 const STORAGE_NAME = "menu-config";
 //const DOCK_TYPE = "dock_tab";
-
-declare const siyuan: any;
 
 export default class PluginDiff extends Plugin {
   async onload() {
@@ -20,6 +21,8 @@ export default class PluginDiff extends Plugin {
     console.log(this.i18n.helloPlugin);
   }
   onLayoutReady() {
+    this.eventBus.on("click-blockicon", this.blockIconEvent);
+
     // this.loadData(STORAGE_NAME);
     //let vueApp: App<Element>;
     const ele = document.createElement("div");
@@ -41,10 +44,66 @@ export default class PluginDiff extends Plugin {
   }
 
   async onunload() {
+    this.eventBus.off("click-blockicon", this.blockIconEvent);
     console.log(this.i18n.byePlugin);
   }
 
   uninstall() {
     console.log("uninstall");
   }
+  private blockIconEvent = ({
+    detail,
+  }: {
+    detail: { menu: Menu; blockElements: [HTMLElement]; protyle: Protyle };
+  }) => {
+    const update = async (index: number) => {
+      Promise.all(
+        detail.blockElements.map(async (superBlock) => {
+          const dataType = superBlock.getAttribute("data-type") as NodeType;
+          if (dataType !== "NodeSuperBlock") {
+            return;
+          }
+          const blockId = superBlock.getAttribute("data-node-id");
+          const attrs = await getBlockAttrs({ id: blockId });
+          const sourceId = attrs["custom-diff-linkId"];
+          if (!sourceId) {
+            return;
+          }
+          const targetHtml = superBlock.children[index].outerHTML;
+          await updateBlock({
+            id: sourceId,
+            dataType: "dom",
+            data: targetHtml,
+          });
+        })
+      );
+      showMessage("更新完成");
+    };
+    detail.menu.addItem({
+      label: "更新链接的块",
+      submenu: [
+        {
+          label: "使用左侧块更新",
+          click: (_element: HTMLElement, _event: MouseEvent) => {
+            update(0);
+          },
+          type: "submenu",
+        },
+        {
+          label: "使用中间块更新",
+          click: (_element: HTMLElement, _event: MouseEvent) => {
+            update(1);
+          },
+          type: "submenu",
+        },
+        {
+          label: "使用右侧块更新",
+          click: (_element: HTMLElement, _event: MouseEvent) => {
+            update(2);
+          },
+          type: "submenu",
+        },
+      ],
+    });
+  };
 }

@@ -181,7 +181,6 @@ const buildDiff = (diffs: DomChange[]) => {
     }
   }
   div.innerHTML = innerHTML.join("");
-  console.log(innerHTML);
   const child = div.firstChild as HTMLElement;
   mergeSpan(child);
   return child;
