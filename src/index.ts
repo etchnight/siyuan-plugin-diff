@@ -81,6 +81,7 @@ export default class PluginDiff extends Plugin {
     };
     detail.menu.addItem({
       label: "更新链接的块",
+      icon:"",
       submenu: [
         {
           label: "使用左侧块更新",
@@ -88,6 +89,7 @@ export default class PluginDiff extends Plugin {
             update(0);
           },
           type: "submenu",
+          icon:"",
         },
         {
           label: "使用中间块更新",
@@ -95,6 +97,7 @@ export default class PluginDiff extends Plugin {
             update(1);
           },
           type: "submenu",
+          icon:"",
         },
         {
           label: "使用右侧块更新",
@@ -102,6 +105,7 @@ export default class PluginDiff extends Plugin {
             update(2);
           },
           type: "submenu",
+          icon:"",
         },
       ],
     });
