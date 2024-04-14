@@ -15,7 +15,6 @@
     "commit": "git add . && cz"
   },
   "devDependencies": {
-    "@types/diff": "^5.0.9",
     "@types/node": "^20.3.0",
     "eslint": "^8.42.0",
     "fast-glob": "^3.2.12",
@@ -45,5 +44,5 @@
       "path": "cz-conventional-changelog"
     }
   },
-  "packageManager": "pnpm@8.15.5"
+  "packageManager": "pnpm@8.15.6"
 }

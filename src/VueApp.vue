@@ -21,7 +21,10 @@
       <el-button type="primary" @click="onSubmit">开始比较</el-button>
     </el-form-item>
   </el-form>
-  <Protyle :data="data" :doc-id="docId" />
+  <Protyle
+    :data="data"
+    :tab-title="form.sourceTitle + '←→' + form.targetTitle"
+  />
 </template>
 
 <script lang="ts" setup>
@@ -30,25 +33,20 @@ import SelectBlock, {
 } from "../subMod/siyuanPlugin-common/vueComponent/SelectBlock.vue";
 import Protyle from "./component/Protyle.vue";
 import { ref } from "vue";
-import {
-  duplicateDoc,
-  getDoc,
-} from "../subMod/siyuanPlugin-common/siyuan-api/filetree";
+import { getDoc } from "../subMod/siyuanPlugin-common/siyuan-api/filetree";
 import { BlockId } from "../subMod/siyuanPlugin-common/types/siyuan-api";
 import { queryBlockById } from "../subMod/siyuanPlugin-common/siyuan-api/query";
-import * as Diff from "diff";
-import { DiffDom, Token, type DomChange } from "./diffDom";
-
-const docId = ref("");
+import { DiffBlock } from "./diffBlock";
+import { DiffLine } from "./diffLine";
+//const tabTitle = ref("");
 export type Data = {
-  source: BlockId;
-  sourceEle: HTMLElement;
-  target: BlockId[];
-  targetEle: HTMLElement[];
-  diff: HTMLElement[];
-  merge: HTMLElement[];
+  source?: BlockId;
+  sourceEle: Element | undefined;
+  target?: BlockId;
+  targetEle: Element | undefined;
+  diffEle?: Element;
+  mergeEle?: Element;
   duplicateId?: BlockId;
-  isNoDiff: boolean;
 };
 const data = ref<Data[]>([]);
 // do not use same name with ref
@@ -84,227 +82,132 @@ const getBlockList = async (id: BlockId) => {
   return blockList;
 };
 
-const isSameLine = (
-  diff: Diff.Change[],
-  oldBlock: string,
-  newBlock: string
-) => {
-  const length = oldBlock.length + newBlock.length;
-  const diffCount = diff.reduce((pre, cur) => {
-    return cur.added || cur.removed ? pre + cur.count : pre;
-  }, 0);
-  return diffCount < length / 2;
-};
-/**
- * 保留旧的span标签，其他全部新增
- */
-const buildMerge = (diffs: DomChange[]) => {
-  const div = document.createElement("div");
-  let innerHTML = "";
-  for (let diff of diffs) {
-    let html: string = "";
-    if (diff.added) {
-      html = diff.value;
-    } else if (diff.removed) {
-      //保留span标签及其内部属性
-      let spanStart = false;
-      for (let token of diff.objValue) {
-        if (token.type === "startTag" && token.value === "<SPAN") {
-          spanStart = true;
-        }
-        if (spanStart) {
-          html += token.value;
-        }
-        if (token.type === "startTagEnd" && token.value === ">" && spanStart) {
-          spanStart = false;
-        }
-        if (token.type === "endTag" && token.value === "</SPAN>") {
-          html += token.value;
-        }
-      }
-    } else {
-      html = diff.value;
-    }
-    innerHTML = innerHTML + html;
+const getId = (div: Element): BlockId => {
+  if (!div) {
+    return;
   }
-  div.innerHTML = innerHTML;
-  const child = div.firstChild as HTMLElement;
-  return child;
-};
-//todo 删除
-const insStyle = `background-color: var(--b3-card-success-background); color: var(--b3-card-success-color);`;
-const delStyle = `background-color: var(--b3-card-error-background); color: var(--b3-card-error-color);`;
-/**
- * 生成差异，标签全部用新的，文字显示差异
- * - div中不允许插入span
- * - 原有span中不允许插入span
- * @param diffs
- */
-const buildDiff = (diffs: DomChange[]) => {
-  const div = document.createElement("div");
-  let innerHTML: string[] = [];
-  let isDivOpen = false;
-  /**
-   * 加入文本时标记是否在<DIV...>中,是的话不能添加diff标记(<span>)
-   * 该错误一般是由零宽字符导致的，具体发生原因尚不明朗
-   * @param token
-   */
-  const switchIsDivOpen = (token: Token) => {
-    if (token.type === "startTag") {
-      isDivOpen = true;
-    }
-    if (token.type === "startTagEnd") {
-      isDivOpen = false;
-    }
-  };
-  for (let diff of diffs) {
-    if (diff.added) {
-      for (let token of diff.objValue) {
-        switchIsDivOpen(token);
-        if (token.type === "text" && !isDivOpen) {
-          innerHTML.push(`<span style="${insStyle}">${token.value}</span>`);
-        } else {
-          innerHTML.push(token.value);
-        }
-      }
-    } else if (diff.removed) {
-      for (let token of diff.objValue) {
-        if (token.type === "text" && !isDivOpen) {
-          innerHTML.push(`<span style="${delStyle}">${token.value}</span>`);
-        }
-      }
-    } else {
-      for (let token of diff.objValue) {
-        switchIsDivOpen(token);
-      }
-      innerHTML.push(`${diff.value}`);
-    }
-  }
-  div.innerHTML = innerHTML.join("");
-  const child = div.firstChild as HTMLElement;
-  mergeSpan(child);
-  return child;
-  /**
-   * 后处理，将<span>部分1<span>部分2</span>部分3</span>合并
-   * 预期结果<span>部分1<span><span>部分2<span><span>部分3<span>
-   * @param ele
-   */
-  function mergeSpan(ele: Element) {
-    for (let child of ele.children) {
-      if (ele.tagName === "SPAN" && child.tagName === "SPAN") {
-        //改变本级节点
-        changeSpan(child.previousSibling, ele);
-        changeSpan(child, ele);
-        changeSpan(child.nextSibling, ele);
-        //回退迭代
-        //mergeSpan(ele.parentElement)
-      }
-      mergeSpan(child);
-    }
-    if (!ele.textContent && ele.tagName === "SPAN") {
-      ele.remove();
-    }
-  }
-  function changeSpan(child: Element | Node, ele: Element) {
-    if (!child) {
-      return;
-    }
-    let child2: Element;
-    //改变子节点
-    //@ts-ignore
-    if (child.getAttribute) {
-      child2 = child as Element;
-      for (let attr of ele.attributes) {
-        const value = child2.getAttribute(attr.name);
-        child2.setAttribute(attr.name, `${attr.value} ${value || ""}`);
-      }
-    } else {
-      child2 = document.createElement("span");
-      for (let attr of ele.attributes) {
-        child2.setAttributeNode(attr);
-      }
-      child2.parentElement.removeChild(child);
-    }
-    ele.before(child2);
-    return child2;
-  }
-};
-
-const offsetLimit = 20;
-const getId = (div: HTMLElement): BlockId => {
   return div.getAttribute("data-node-id");
 };
-const buildData = (oneList: HTMLElement[], otherList: HTMLElement[]) => {
-  const diffDom = new DiffDom();
-  data.value = [];
-  for (let i = 0; i < oneList.length; i++) {
-    let diff: Diff.Change[];
-    let sameFlag = false;
-    let m = 0; //otherList 索引，处理过的全部删除
-    do {
-      diff = Diff.diffChars(oneList[i].innerText, otherList[m].innerText);
-      sameFlag = isSameLine(diff, oneList[i].innerText, otherList[m].innerText);
-      m++;
-    } while (!sameFlag && otherList[m] && m < offsetLimit);
-    if (sameFlag) {
-      const diffHtml = diffDom.diffDom(oneList[i], otherList[m - 1]);
-      //忽略的属性
-      const unChangeAttr = ["data-node-id", "data-node-index", "updated"];
-      const isDiff = diffHtml.find((e) => {
-        if (!e.added && !e.removed) {
-          return false;
-        }
-        for (let token of e.objValue) {
-          if (token.type === "text") {
-            continue;
-          }
-          if (
-            unChangeAttr.find((e) => {
-              return token.value.startsWith(` ${e}=`);
-            })
-          ) {
-            return true;
-          }
-        }
-        return false;
-      });
-      data.value[i] = {
-        source: getId(oneList[i]),
-        sourceEle: oneList[i],
-        target: [getId(otherList[m - 1])],
-        targetEle: [otherList[m - 1]],
-        diff: [buildDiff(diffHtml)],
-        merge: [buildMerge(diffHtml)],
-        isNoDiff: !isDiff,
-      };
-      const adds = otherList.splice(0, m - 1); //增加otherList相同项之前的
-      otherList.shift(); //删除相同的项
-      diffAdds(i, adds);
-    } else {
-      //删除
-      data.value[i] = {
-        source: getId(oneList[i]),
-        sourceEle: oneList[i],
-        target: [],
-        targetEle: [],
-        diff: [],
-        merge: [],
-        isNoDiff: false,
-      };
+const getBlockContentList = (item: Element): Element[] => {
+  return Array.from(
+    item.querySelectorAll("[contenteditable]:not(.protyle-attr)")
+  );
+};
+const buildData = (oneList: Element[], otherList: Element[]) => {
+  const diffBlock = new DiffBlock();
+  const diffLine = new DiffLine(true);
+  let data: Data[] = diffBlock.patch(oneList, otherList);
+  data = data.map((item) => {
+    return {
+      source: getId(item.sourceEle),
+      target: getId(item.targetEle),
+      sourceEle: item.sourceEle,
+      targetEle: item.targetEle,
+    };
+  });
+  const insStyle = `background-color: var(--b3-card-success-background); color: var(--b3-card-success-color);`;
+  const delStyle = `background-color: var(--b3-card-error-background); color: var(--b3-card-error-color);`;
+  data = data.map((item) => {
+    //*块级更改
+    if (!item.sourceEle) {
+      item.diffEle = item.targetEle.cloneNode(true) as Element;
+      item.diffEle.setAttribute("style", insStyle);
+      item.mergeEle = item.targetEle.cloneNode(true) as Element;
+      return item;
     }
-  }
-  diffAdds(oneList.length - 1, otherList); //增加剩余项
+    if (!item.targetEle) {
+      item.diffEle = item.sourceEle.cloneNode(true) as Element;
+      item.diffEle.setAttribute("style", delStyle);
+      return item;
+    }
+    //*source将转换为merge结果，target转换为diff
+    let source_merge = item.sourceEle.cloneNode(true) as Element;
+    let target_diff = item.targetEle.cloneNode(true) as Element;
+    //*行级更改
+    const sourceList = getBlockContentList(source_merge);
+    const targetList = getBlockContentList(target_diff);
+    const patchs = diffBlock.patch(sourceList, targetList);
+    /**
+     * @returns isAfter 使用的是后面兄弟，说明要在其前面插入
+     */
+    const findBrother = (
+      i: number,
+      list: {
+        sourceEle: Element;
+        targetEle: Element;
+      }[],
+      isSource: boolean
+    ) => {
+      const key = isSource ? "sourceEle" : "targetEle";
+      let offset = 1;
+      let brother: Element;
+      let isAfter = false;
+      do {
+        isAfter = !isAfter;
+        //todo 是否可能都没有
+        if (isAfter) {
+          brother = list[i + offset] ? list[i + offset][key] : undefined;
+        } else {
+          brother = list[i - offset] ? list[i - offset][key] : undefined;
+          offset++;
+        }
+      } while (!brother && offset < list.length);
+      const parent = brother.parentElement;
+      return { parent, isAfter };
+    };
+    patchs.forEach((line, i, list) => {
+      //*增加行:复制兄弟块，替换内容，添加到父级（merge），在diff中标记为添加
+      //*删除行:复制兄弟块，替换内容，添加到diff，并标记为删除，在merge中删除
+      if (!line.sourceEle || !line.targetEle) {
+        const ele = line.sourceEle || line.targetEle;
+        const { parent, isAfter } = findBrother(i, list, !line.sourceEle);
+        const parentClone = parent.cloneNode(true) as HTMLDivElement;
+        getBlockContentList(parentClone)[0].replaceWith(ele.cloneNode(true));
+        isAfter ? parent.before(parentClone) : parent.after(parentClone);
+        if (!line.sourceEle) {
+          line.targetEle.parentElement.setAttribute("style", insStyle);
+        } else if (!line.targetEle) {
+          parentClone.setAttribute("style", delStyle);
+          line.sourceEle.parentElement.remove();
+        }
+        return;
+      }
+      //*字符级更改
+      const diff = diffLine.diff(line.targetEle, line.sourceEle);
+      diff.forEach((change) => {
+        change.value = diffLine.mergeTokens(change.value);
+      });
+      console.log("diff", diff);
+      const diffEle = diffLine.patchDiff(diff);
+      const mergeEle = diffLine.patchMerge(diff);
+      //!特别下列替换，即merge使用原容器，diff使用新容器
+      line.sourceEle.replaceWith(mergeEle);
+      line.sourceEle = mergeEle;
+      line.targetEle.replaceWith(diffEle);
+      line.targetEle = diffEle;
+    });
+    return {
+      source: item.source,
+      target: item.target,
+      sourceEle: item.sourceEle,
+      targetEle: item.targetEle,
+      mergeEle: source_merge,
+      diffEle: target_diff,
+      //duplicateId:重复文档后再添加
+    };
+  });
+  console.table(
+    data.map((e) => {
+      return {
+        source: e.sourceEle?.outerHTML,
+        target: e.targetEle?.outerHTML,
+        diff: e.diffEle?.outerHTML,
+        merge: e.mergeEle?.outerHTML,
+      };
+    })
+  );
 
-  function diffAdds(i: number, adds: HTMLElement[]) {
-    data.value[i].target = data.value[i].target.concat(
-      adds.map((e) => getId(e))
-    );
-    data.value[i].targetEle = data.value[i].targetEle.concat(adds);
-    data.value[i].merge = data.value[i].merge.concat(adds);
-    data.value[i].diff = data.value[i].diff.concat(
-      adds.map((e) => ((e.style.cssText = insStyle), e))
-    );
-  }
+  return data;
 };
 const main = async () => {
   const sourceBlockList = (await getBlockList(
@@ -313,16 +216,23 @@ const main = async () => {
   const targetBlockList = (await getBlockList(
     form.value.target
   )) as NodeListOf<HTMLElement>;
-  buildData(Array.from(sourceBlockList), Array.from(targetBlockList));
-  console.log(data.value);
-  const outputDoc = await duplicateDoc(form.value.source);
+  data.value = buildData(
+    Array.from(sourceBlockList),
+    Array.from(targetBlockList)
+  );
+  /*   const outputDoc = await duplicateDoc(form.value.source);
   const outputBlockList = (await getBlockList(
     outputDoc.id
   )) as NodeListOf<HTMLElement>;
-  data.value.forEach((e, i) => {
-    e.duplicateId = getId(outputBlockList[i]);
-  });
-  docId.value = outputDoc.id; //触发更新动作
+  let index = 0;
+  data.value.forEach((e, _i) => {
+    if (!e.sourceEle) {
+      return;
+    }
+    index++;
+    e.duplicateId = getId(outputBlockList[index]);
+  }); */
+  //tabTitle.value = `←→`; //*触发更新动作
 };
 </script>
 <style></style>

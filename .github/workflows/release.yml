@@ -43,6 +43,9 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
+      # 子模块
+      - name: Update Submodule
+        run: git submodule update --init --recursive
 
       # Install dependencies
       - name: Install dependencies

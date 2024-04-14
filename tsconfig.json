@@ -31,7 +31,8 @@
     // "baseUrl": "./src",
     "paths": {
       "@/*": ["./src/*"],
-      "@/libs/*": ["./src/libs/*"]
+      "@/libs/*": ["./src/libs/*"],
+      "*": ["./src/types/*"]
     }
   },
   "include": [

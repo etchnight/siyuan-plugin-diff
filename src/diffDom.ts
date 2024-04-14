@@ -1,3 +1,6 @@
+/**
+ * !对元素进行比较，已弃用
+ */
 import * as Diff from "diff"; //声明文件已修改
 
 export type Token = {

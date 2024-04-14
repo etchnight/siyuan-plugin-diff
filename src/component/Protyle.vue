@@ -1,86 +1,62 @@
 <template></template>
 <script lang="ts" setup>
 import { onUpdated } from "vue";
-import { App, openTab, showMessage } from "siyuan";
+import { App, Protyle, openTab } from "siyuan";
 import { type Data } from "../VueApp.vue";
 import {
   buildParaBlock,
   buildSuperBlock,
 } from "../../subMod/siyuanPlugin-common/component/blockEle";
-import {
-  insertBlock,
-  updateBlock,
-} from "../../subMod/siyuanPlugin-common/siyuan-api/block";
+
 import { ISiyuan } from "../../subMod/siyuanPlugin-common/types/global-siyuan";
-import { setBlockAttrs } from "../../subMod/siyuanPlugin-common/siyuan-api/attr";
 declare const siyuan: ISiyuan;
 const props = defineProps<{
   data: Data[];
-  docId: string;
+  tabTitle: string;
 }>();
-const update = async (e: Data) => {
-  if (e.isNoDiff) {
-    return;
-  }
-  const diff = e.diff[0] || buildParaBlock("");
-  const merge = e.merge[0] || buildParaBlock("");
-  let superBlock = buildSuperBlock("col", [
-    e.sourceEle.outerHTML,
-    diff.outerHTML,
-    merge.outerHTML,
-  ]);
-  await updateBlock({
-    dataType: "dom",
-    data: superBlock.outerHTML,
-    id: e.duplicateId,
-  });
-  await setBlockAttrs({
-    id: e.duplicateId,
-    attrs: {
-      "custom-diff-linkId": e.source,
-    },
-  });
-  let preId = e.duplicateId;
-  for (let i = 1; i < e.target.length; i++) {
-    superBlock = buildSuperBlock("col", [
-      buildParaBlock("").outerHTML,
-      e.diff[i].outerHTML,
-      e.merge[i].outerHTML,
-    ]);
-    await insertBlock({
-      dataType: "dom",
-      data: superBlock.outerHTML,
-      previousID: preId,
-    });
-    preId = superBlock.getAttribute("data-node-id");
-    await setBlockAttrs({
-      id: preId,
-      attrs: {
-        "custom-diff-linkId": e.source,
-      },
-    });
-  }
-};
-onUpdated(async () => {
-  if (!props.docId) {
-    return;
-  }
 
-  let i = 0;
-  const step = 10; //n个一组
-  while (i < props.data.length) {
-    showMessage(`生成比较文档${i}/${props.data.length}`, 3000);
-    const group = props.data.slice(i, i + step);
-    await Promise.all(group.map(update));
-    i = i + step;
+onUpdated(async () => {
+  if (!props.data || props.data.length == 0) {
+    return;
   }
-  openTab({
+  const tab = await openTab({
     app: siyuan.ws.app as App,
-    doc: {
-      id: props.docId,
+    custom: {
+      id: "siyuan-plugin-diff-custom", // 插件名称+页签类型：plugin.name + tab.type
+      icon: "",
+      title: props.tabTitle,
+      data: undefined,
     },
     keepCursor: false,
     async afterOpen() {},
   });
+  console.log("tab", tab);
+  const protyle = new Protyle(siyuan.ws.app, tab.panelElement, {
+    after(protyle) {
+      //?虽然没什么作用但是必须要有
+      console.log(protyle);
+    },
+  });
+  while (protyle.isUploading()) {
+    await sleep(150);
+  }
+
+  console.log("protyle", protyle);
+  for (let item of props.data) {
+    const diff = item.diffEle || buildParaBlock("");
+    const merge = item.mergeEle || buildParaBlock("");
+    const source = item.sourceEle || buildParaBlock("");
+    let superBlock = buildSuperBlock("col", [
+      source.outerHTML,
+      diff.outerHTML,
+      merge.outerHTML,
+    ]);
+    protyle.protyle.wysiwyg.element.appendChild(superBlock);
+  }
 });
+function sleep(timeout: number) {
+  return new Promise((resolve, _reject) => {
+    setTimeout(resolve, timeout);
+  });
+}
 </script>
