@@ -1,3 +1,10 @@
 div.protyle-hint.b3-list.b3-list--background.block-autocomplete.el-popper {
   width: 400px !important;
 }
+#plugin-diff,
+#plugin-diff .el-button--primary {
+  --el-text-color-regular: var(--b3-theme-on-background);
+  --el-button-bg-color: var(--b3-theme-primary);
+  --el-button-border-color: var(--b3-theme-primary);
+  --el-button-text-color: var(--b3-theme-on-primary);
+}

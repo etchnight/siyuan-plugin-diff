@@ -27,6 +27,7 @@ export default class PluginDiff extends Plugin {
     // this.loadData(STORAGE_NAME);
     //let vueApp: App<Element>;
     const ele = document.createElement("div");
+    ele.id = "plugin-diff";
     this.addTopBar({
       icon: "iconDiff",
       title: "文档差异比较与合并",
