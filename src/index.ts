@@ -1,7 +1,7 @@
 import { Menu, Plugin, Protyle, showMessage } from "siyuan";
 import { createApp } from "vue";
 import VueApp from "./VueApp.vue";
-import ElementPlus from "element-plus";
+//import ElementPlus from "element-plus";
 import { getBlockAttrs } from "../subMod/siyuanPlugin-common/siyuan-api/attr";
 import { updateBlock } from "../subMod/siyuanPlugin-common/siyuan-api/block";
 import { NodeType } from "../subMod/siyuanPlugin-common/types/siyuan-api";
@@ -39,7 +39,7 @@ export default class PluginDiff extends Plugin {
       },
     });
     const vueApp = createApp(VueApp);
-    vueApp.use(ElementPlus);
+    //vueApp.use(ElementPlus);
     vueApp.mount(ele);
   }
 
@@ -53,7 +53,7 @@ export default class PluginDiff extends Plugin {
   }
   /**
    * @deprecated 暂时不使用块标菜单更新
-   * @param param0 
+   * @param param0
    */
   private blockIconEvent = ({
     detail,
@@ -85,7 +85,7 @@ export default class PluginDiff extends Plugin {
     };
     detail.menu.addItem({
       label: "更新链接的块",
-      icon:"",
+      icon: "",
       submenu: [
         {
           label: "使用左侧块更新",
@@ -93,7 +93,7 @@ export default class PluginDiff extends Plugin {
             update(0);
           },
           type: "submenu",
-          icon:"",
+          icon: "",
         },
         {
           label: "使用中间块更新",
@@ -101,7 +101,7 @@ export default class PluginDiff extends Plugin {
             update(1);
           },
           type: "submenu",
-          icon:"",
+          icon: "",
         },
         {
           label: "使用右侧块更新",
@@ -109,7 +109,7 @@ export default class PluginDiff extends Plugin {
             update(2);
           },
           type: "submenu",
-          icon:"",
+          icon: "",
         },
       ],
     });
