@@ -177,7 +177,7 @@ const buildData = (oneList: Element[], otherList: Element[]) => {
       diff.forEach((change) => {
         change.value = diffLine.mergeTokens(change.value);
       });
-      console.log("diff", diff);
+      //console.log("diff", diff);
       const diffEle = diffLine.patchDiff(diff);
       const mergeEle = diffLine.patchMerge(diff);
       //!特别下列替换，即merge使用原容器，diff使用新容器
@@ -196,6 +196,7 @@ const buildData = (oneList: Element[], otherList: Element[]) => {
       //duplicateId:重复文档后再添加
     };
   });
+  return data;
   console.table(
     data.map((e) => {
       return {
@@ -206,8 +207,6 @@ const buildData = (oneList: Element[], otherList: Element[]) => {
       };
     })
   );
-
-  return data;
 };
 const main = async () => {
   const sourceBlockList = (await getBlockList(

@@ -1,7 +1,7 @@
 <template></template>
 <script lang="ts" setup>
 import { onUpdated } from "vue";
-import { App, Protyle, openTab } from "siyuan";
+import { App, type Lute as LUTE, Protyle, openTab } from "siyuan";
 import { type Data } from "../VueApp.vue";
 import {
   buildParaBlock,
@@ -10,6 +10,7 @@ import {
 
 import { ISiyuan } from "../../subMod/siyuanPlugin-common/types/global-siyuan";
 declare const siyuan: ISiyuan;
+declare const Lute: typeof LUTE;
 const props = defineProps<{
   data: Data[];
   tabTitle: string;
@@ -30,7 +31,7 @@ onUpdated(async () => {
     keepCursor: false,
     async afterOpen() {},
   });
-  console.log("tab", tab);
+  //console.log("tab", tab);
   const protyle = new Protyle(siyuan.ws.app, tab.panelElement, {
     after(protyle) {
       //?虽然没什么作用但是必须要有
@@ -41,10 +42,12 @@ onUpdated(async () => {
     await sleep(150);
   }
 
-  console.log("protyle", protyle);
+  //console.log("protyle", protyle);
   for (let item of props.data) {
     const diff = item.diffEle || buildParaBlock("");
+    diff.querySelectorAll("[data-node-id]").forEach((e) => resetId(e));
     const merge = item.mergeEle || buildParaBlock("");
+    merge.querySelectorAll("[data-node-id]").forEach((e) => resetId(e));
     const source = item.sourceEle || buildParaBlock("");
     let superBlock = buildSuperBlock("col", [
       source.outerHTML,
@@ -58,5 +61,10 @@ function sleep(timeout: number) {
   return new Promise((resolve, _reject) => {
     setTimeout(resolve, timeout);
   });
+}
+function resetId(ele: Element) {
+  if (ele.getAttribute("data-node-id")) {
+    ele.setAttribute("data-node-id", Lute.NewNodeID());
+  }
 }
 </script>
