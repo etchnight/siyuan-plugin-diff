@@ -21,7 +21,7 @@ export default class PluginDiff extends Plugin {
     console.log(this.i18n.helloPlugin);
   }
   onLayoutReady() {
-    this.eventBus.on("click-blockicon", this.blockIconEvent);
+    //this.eventBus.on("click-blockicon", this.blockIconEvent);
 
     // this.loadData(STORAGE_NAME);
     //let vueApp: App<Element>;
@@ -44,13 +44,17 @@ export default class PluginDiff extends Plugin {
   }
 
   async onunload() {
-    this.eventBus.off("click-blockicon", this.blockIconEvent);
+    //this.eventBus.off("click-blockicon", this.blockIconEvent);
     console.log(this.i18n.byePlugin);
   }
 
   uninstall() {
     console.log("uninstall");
   }
+  /**
+   * @deprecated 暂时不使用块标菜单更新
+   * @param param0 
+   */
   private blockIconEvent = ({
     detail,
   }: {
