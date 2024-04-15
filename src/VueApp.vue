@@ -8,12 +8,22 @@
     <el-form-item label="原文档">
       <SelectBlock
         v-model:state="form.sourceTitle"
+        :search-types="{
+          document: true,
+          heading: false,
+          paragraph: false,
+        }"
         @update="(item) => update(item, true)"
       ></SelectBlock>
     </el-form-item>
     <el-form-item label="新文档">
       <SelectBlock
         v-model:state="form.targetTitle"
+        :search-types="{
+          document: true,
+          heading: false,
+          paragraph: false,
+        }"
         @update="(item) => update(item, false)"
       ></SelectBlock>
     </el-form-item>
