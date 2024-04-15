@@ -1,3 +1,12 @@
+# [0.2.0](https://github.com/etchnight/siyuan-plugin-diff/compare/v0.1.0...v0.2.0) (2024-04-15)
+
+
+### Reverts
+
+* 删除块标菜单 ([a1b6672](https://github.com/etchnight/siyuan-plugin-diff/commit/a1b66723ddcdc4dae947f93bf05df6276901f505))
+
+
+
 # 0.1.0 (2024-03-31)
 
 
