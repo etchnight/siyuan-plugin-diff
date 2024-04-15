@@ -5,6 +5,7 @@ import VueApp from "./VueApp.vue";
 import { getBlockAttrs } from "../subMod/siyuanPlugin-common/siyuan-api/attr";
 import { updateBlock } from "../subMod/siyuanPlugin-common/siyuan-api/block";
 import { NodeType } from "../subMod/siyuanPlugin-common/types/siyuan-api";
+import "./element.css";
 const STORAGE_NAME = "menu-config";
 //const DOCK_TYPE = "dock_tab";
 

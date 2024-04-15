@@ -3,7 +3,8 @@
     :model="form"
     label-width="auto"
     :inline="false"
-    style="width: 300px"
+    style="width: 400px; height: 350px"
+    @click.stop="(e) => e /**阻止窗口关闭 */"
   >
     <el-form-item label="原文档">
       <SelectBlock
@@ -66,7 +67,6 @@ const form = ref({
   target: "",
   targetTitle: "",
 });
-
 const update = async (item: BlockAC, isSource: boolean) => {
   if (isSource) {
     form.value.source = item.rootID;
