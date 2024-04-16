@@ -1,3 +1,17 @@
+## [0.2.2](https://github.com/etchnight/siyuan-plugin-diff/compare/v0.2.1...v0.2.2) (2024-04-16)
+
+
+### Bug Fixes
+
+* 修复readme文档指向错误 ([34505e2](https://github.com/etchnight/siyuan-plugin-diff/commit/34505e274a4585c907b552f5bf22e1e44a32ecee))
+
+
+### Features
+
+* 使用块标菜单插入新增的块 ([a31943b](https://github.com/etchnight/siyuan-plugin-diff/commit/a31943ba04aa20a5e77463c19abf58de580a146f)), closes [#1](https://github.com/etchnight/siyuan-plugin-diff/issues/1)
+
+
+
 ## [0.2.1](https://github.com/etchnight/siyuan-plugin-diff/compare/v0.2.0...v0.2.1) (2024-04-15)
 
 

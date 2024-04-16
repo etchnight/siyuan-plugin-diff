@@ -1,6 +1,6 @@
 {
   "name": "siyuan-plugin-diff",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "description": "比较与合并文档",
   "repository": "",
