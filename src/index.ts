@@ -1,11 +1,20 @@
-import { Menu, Plugin, Protyle, showMessage } from "siyuan";
+import { IProtyle, Menu, Plugin, showMessage } from "siyuan";
 import { createApp } from "vue";
 import VueApp from "./VueApp.vue";
 //import ElementPlus from "element-plus";
 import { getBlockAttrs } from "../subMod/siyuanPlugin-common/siyuan-api/attr";
-import { updateBlock } from "../subMod/siyuanPlugin-common/siyuan-api/block";
+import {
+  insertBlock,
+  updateBlock,
+} from "../subMod/siyuanPlugin-common/siyuan-api/block";
 import { NodeType } from "../subMod/siyuanPlugin-common/types/siyuan-api";
 import "./element.css";
+import {
+  getSourceId,
+  removeSourceId,
+  resetId,
+  setSourceId,
+} from "./domOperate";
 const STORAGE_NAME = "menu-config";
 //const DOCK_TYPE = "dock_tab";
 
@@ -22,7 +31,7 @@ export default class PluginDiff extends Plugin {
     console.log(this.i18n.helloPlugin);
   }
   onLayoutReady() {
-    //this.eventBus.on("click-blockicon", this.blockIconEvent);
+    this.eventBus.on("click-blockicon", this.blockIconEvent);
 
     // this.loadData(STORAGE_NAME);
     //let vueApp: App<Element>;
@@ -46,7 +55,7 @@ export default class PluginDiff extends Plugin {
   }
 
   async onunload() {
-    //this.eventBus.off("click-blockicon", this.blockIconEvent);
+    this.eventBus.off("click-blockicon", this.blockIconEvent);
     console.log(this.i18n.byePlugin);
   }
 
@@ -54,14 +63,34 @@ export default class PluginDiff extends Plugin {
     console.log("uninstall");
   }
   /**
-   * @deprecated 暂时不使用块标菜单更新
    * @param param0
    */
   private blockIconEvent = ({
     detail,
   }: {
-    detail: { menu: Menu; blockElements: [HTMLElement]; protyle: Protyle };
+    detail: { menu: Menu; blockElements: [HTMLElement]; protyle: IProtyle };
   }) => {
+    console.log(detail);
+    try {
+      detail.protyle.element.classList;
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+    if (!detail.protyle.element.classList.contains("plugin-diff")) {
+      return;
+    }
+    if (
+      !detail.blockElements.some((e) => {
+        return e.getAttribute("data-type") === "NodeSuperBlock";
+      })
+    ) {
+      return;
+    }
+    /**
+     * @deprecated
+     * @param index
+     */
     const update = async (index: number) => {
       Promise.all(
         detail.blockElements.map(async (superBlock) => {
@@ -85,35 +114,61 @@ export default class PluginDiff extends Plugin {
       );
       showMessage("更新完成");
     };
-    detail.menu.addItem({
-      label: "更新链接的块",
-      icon: "",
-      submenu: [
-        {
-          label: "使用左侧块更新",
-          click: (_element: HTMLElement, _event: MouseEvent) => {
-            update(0);
-          },
-          type: "submenu",
-          icon: "",
+    /* {
+            label: "使用左侧块更新",
+            click: (_element: HTMLElement, _event: MouseEvent) => {
+              update(0);
+            },
+            type: "submenu",
+            icon: "",
+          },*/
+    const addToSource = async () => {
+      for (let item of detail.blockElements) {
+        if (item.getAttribute("data-type") !== "NodeSuperBlock") {
+          continue;
+        }
+        //*获取插入位置
+        const preSourceId = getSourceId(item, true);
+        if (!preSourceId) {
+          continue;
+        }
+        //*执行插入
+        const mergeBlock = resetId(
+          item.children.item(2).cloneNode(true) as Element
+        );
+        const res = await insertBlock({
+          dataType: "dom",
+          data: mergeBlock.outerHTML,
+          previousID: preSourceId,
+        });
+        //*修改下一个连续插入内容插入位置
+        const nextItem = item.nextSibling as Element;
+        const currentId = res[0]?.doOperations[0]?.id;
+        if (!nextItem || !currentId) {
+          continue;
+        }
+        setSourceId(nextItem, currentId, true);
+        //*修正文档显示错误
+        removeSourceId(item, true);
+        const parent = item.parentElement;
+        item.firstElementChild.replaceWith(
+          parent.querySelector(`[data-node-id='${currentId}']`)
+        );
+      }
+    };
+    if (
+      detail.blockElements.some((e) => {
+        return getSourceId(e, true);
+      })
+    ) {
+      detail.menu.addItem({
+        label: "将新增内容添加到原文档",
+        icon: "",
+        iconHTML: "",
+        click(_element, _event) {
+          addToSource();
         },
-        {
-          label: "使用中间块更新",
-          click: (_element: HTMLElement, _event: MouseEvent) => {
-            update(1);
-          },
-          type: "submenu",
-          icon: "",
-        },
-        {
-          label: "使用右侧块更新",
-          click: (_element: HTMLElement, _event: MouseEvent) => {
-            update(2);
-          },
-          type: "submenu",
-          icon: "",
-        },
-      ],
-    });
+      });
+    }
   };
 }

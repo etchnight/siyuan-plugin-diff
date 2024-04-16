@@ -9,8 +9,8 @@ import {
 } from "../../subMod/siyuanPlugin-common/component/blockEle";
 
 import { ISiyuan } from "../../subMod/siyuanPlugin-common/types/global-siyuan";
+import { createSourceId, resetId } from "../domOperate";
 declare const siyuan: ISiyuan;
-declare const Lute: typeof LUTE;
 const props = defineProps<{
   data: Data[];
   tabTitle: string;
@@ -41,12 +41,15 @@ onUpdated(async () => {
   while (protyle.isUploading()) {
     await sleep(150);
   }
-
+  protyle.protyle.element.classList.add("plugin-diff");
   //console.log("protyle", protyle);
+  let preSourceId = "";
   for (let item of props.data) {
     const diff = item.diffEle || buildParaBlock("");
+    resetId(diff);
     diff.querySelectorAll("[data-node-id]").forEach((e) => resetId(e));
     const merge = item.mergeEle || buildParaBlock("");
+    resetId(merge);
     merge.querySelectorAll("[data-node-id]").forEach((e) => resetId(e));
     const source = item.sourceEle || buildParaBlock("");
     let superBlock = buildSuperBlock("col", [
@@ -54,17 +57,18 @@ onUpdated(async () => {
       diff.outerHTML,
       merge.outerHTML,
     ]);
+    if (!item.source) {
+      createSourceId(superBlock, preSourceId, true);
+    }
     protyle.protyle.wysiwyg.element.appendChild(superBlock);
+    if (item.source) {
+      preSourceId = item.source;
+    }
   }
 });
 function sleep(timeout: number) {
   return new Promise((resolve, _reject) => {
     setTimeout(resolve, timeout);
   });
-}
-function resetId(ele: Element) {
-  if (ele.getAttribute("data-node-id")) {
-    ele.setAttribute("data-node-id", Lute.NewNodeID());
-  }
 }
 </script>
