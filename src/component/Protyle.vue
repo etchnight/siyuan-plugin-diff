@@ -9,11 +9,45 @@ import {
 
 import { ISiyuan } from "../../subMod/siyuanPlugin-common/types/global-siyuan";
 import { createSourceId, resetId } from "../domOperate";
+import { Ref, ref } from "vue";
 declare const siyuan: ISiyuan;
 const props = defineProps<{
   tabTitle: string;
+  data: Data[];
 }>();
+const protyle: Ref<Protyle> = ref(null);
+const buildButton = (label: string, icon: string) => {
+  const button = document.createElement("button");
+  const breadcrumb = protyle.value.protyle.element.querySelector(
+    ".protyle-breadcrumb"
+  );
+  breadcrumb.querySelector(".block__icon.fn__flex-center").before(button);
+  button.outerHTML = `<button class="block__icon fn__flex-center ariaLabel" aria-label="${label}" >
+    <svg><use xlink:href="#${icon}"></use></svg>
+    </button>`;
+  return button;
+};
+const isSuperBlock = (selectBlock: Element) => {
+  return (
+    selectBlock.getAttribute("data-type") === "NodeSuperBlock" &&
+    selectBlock.parentElement.classList.contains("protyle-wysiwyg")
+  );
+};
+const getNextChange = () => {
+  let selectBlock = window.getSelection().anchorNode.parentElement;
+  while (!isSuperBlock(selectBlock) && selectBlock.parentElement) {
+    selectBlock = selectBlock.parentElement;
+  }
+  let nextBlock=selectBlock.nextSibling as Element
+  while(nextBlock){
+    if(nextBlock.querySelector("")){
 
+    }
+  }
+  protyle.value.protyle.contentElement.scrollTo({
+    top: selectBlock.offsetTop,
+  });
+};
 const updateProtyle = async (data: Data[]) => {
   if (!data || data.length == 0) {
     return;
@@ -31,16 +65,21 @@ const updateProtyle = async (data: Data[]) => {
     async afterOpen() {},
   });
   //console.log("tab", tab);
-  const protyle = new Protyle(siyuan.ws.app, tab.panelElement, {
+  protyle.value = new Protyle(siyuan.ws.app, tab.panelElement, {
     after(protyle) {
       //?虽然没什么作用但是必须要有
       console.log(protyle);
     },
   });
-  while (protyle.isUploading()) {
+
+  while (protyle.value.isUploading()) {
     await sleep(150);
   }
-  protyle.protyle.element.classList.add("plugin-diff");
+
+  //console.log(protyle);
+  protyle.value.protyle.element.classList.add("plugin-diff");
+  //buildButton("下一个更改", "iconDown");
+  //buildButton("上一个更改", "iconUp");
   //console.log("protyle", protyle);
   let preSourceId = "";
   for (let item of data) {
@@ -59,7 +98,7 @@ const updateProtyle = async (data: Data[]) => {
     if (!item.source) {
       createSourceId(superBlock, preSourceId, true);
     }
-    protyle.protyle.wysiwyg.element.appendChild(superBlock);
+    protyle.value.protyle.wysiwyg.element.appendChild(superBlock);
     if (item.source) {
       preSourceId = item.source;
     }

@@ -35,6 +35,7 @@
     "@vitejs/plugin-vue": "^5.0.4",
     "cz-conventional-changelog": "^3.3.0",
     "diff": "^5.2.0",
+    "diff-dom": "^5.1.3",
     "element-plus": "^2.6.2",
     "siyuan": "^0.9.6",
     "vue": "^3.4.21"
@@ -44,5 +45,10 @@
       "path": "cz-conventional-changelog"
     }
   },
-  "packageManager": "pnpm@8.15.6"
+  "packageManager": "pnpm@8.15.6",
+  "pnpm": {
+    "patchedDependencies": {
+      "diff-dom@5.1.3": "patches/diff-dom@5.1.3.patch"
+    }
+  }
 }

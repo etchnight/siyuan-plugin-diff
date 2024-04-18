@@ -33,6 +33,7 @@
   </el-form>
   <Protyle
     :tab-title="form.sourceTitle + '←→' + form.targetTitle"
+    :data="data"
     ref="protyle"
   />
 </template>
@@ -49,6 +50,8 @@ import { queryBlockById } from "../subMod/siyuanPlugin-common/siyuan-api/query";
 import { DiffBlock } from "./diffBlock";
 import { DiffLine } from "./diffLine";
 import { showMessage } from "siyuan";
+import { DiffDOM } from "diff-dom";
+
 //const tabTitle = ref("");
 export type Data = {
   source?: BlockId;
@@ -58,8 +61,9 @@ export type Data = {
   diffEle?: Element;
   mergeEle?: Element;
   duplicateId?: BlockId;
+  isNodiff?: boolean;
 };
-//const data = ref<Data[]>([]);
+const data = ref<Data[]>([]);
 const protyle = ref(null);
 const form = ref({
   source: "",
@@ -103,10 +107,25 @@ const getBlockContentList = (item: Element): Element[] => {
     item.querySelectorAll("[contenteditable]:not(.protyle-attr)")
   );
 };
+const diffBlock = new DiffBlock();
+const diffLine = new DiffLine(true);
+const diffDom = new DiffDOM({
+  filterOuterDiff: function (_t1, _t2, diffs) {
+    //过滤属性差异
+    diffs = diffs.filter((diff) => {
+      if (diff.action.includes("Attribute")) {
+        const excludeAttrs = ["data-node-id", "updated", "data-node-index"];
+        if (excludeAttrs.includes(diff.name)) {
+          return false;
+        }
+      }
+      return true;
+    });
+    return diffs;
+  },
+});
 const buildData = (oneList: Element[], otherList: Element[]) => {
   showMessage("正在进行差异检查...");
-  const diffBlock = new DiffBlock();
-  const diffLine = new DiffLine(true);
   let data: Data[] = diffBlock.patch(oneList, otherList);
   data = data.map((item) => {
     return {
@@ -134,6 +153,16 @@ const buildData = (oneList: Element[], otherList: Element[]) => {
     //*source将转换为merge结果，target转换为diff
     let source_merge = item.sourceEle.cloneNode(true) as Element;
     let target_diff = item.targetEle.cloneNode(true) as Element;
+    //*无更改
+    const domDiff = diffDom.diff(item.sourceEle, item.targetEle);
+    if (domDiff.length === 0) {
+      return {
+        ...item,
+        diffEle: target_diff,
+        mergeEle: source_merge,
+        isNodiff: true,
+      };
+    }
     //*行级更改
     const sourceList = getBlockContentList(source_merge);
     const targetList = getBlockContentList(target_diff);
@@ -198,10 +227,7 @@ const buildData = (oneList: Element[], otherList: Element[]) => {
       line.targetEle = diffEle;
     });
     return {
-      source: item.source,
-      target: item.target,
-      sourceEle: item.sourceEle,
-      targetEle: item.targetEle,
+      ...item,
       mergeEle: source_merge,
       diffEle: target_diff,
       //duplicateId:重复文档后再添加
@@ -227,11 +253,12 @@ const main = async () => {
   const targetBlockList = (await getBlockList(
     form.value.target
   )) as NodeListOf<HTMLElement>;
-  const data = buildData(
+  data.value = buildData(
     Array.from(sourceBlockList),
     Array.from(targetBlockList)
   );
-  protyle.value.updateProtyle(data);
+
+  protyle.value.updateProtyle(data.value);
 };
 </script>
 <style></style>

@@ -1,0 +1,18 @@
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index da7db90cbd96fa36e1f3c9b1d26c052b48c89053..5d3d22015fb63633b165954b6166db9e0bb39066 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -6,6 +6,13 @@ declare class Diff {
+             [key: string]: string;
+         };
+     } | elementNodeType): this;
++    action: string;
++    route: [];
++    name: string;
++    oldValue?: string | elementNodeType;//"modifyTextElement"/"replaceElement"
++    newValue?: string|elementNodeType;//"modifyTextElement"/"replaceElement"
++    value?: string;//"removeTextElement"
++    element?: elementNodeType;//"removeElement"/"addElement"
+ }
+ 
+ interface elementNodeType {
