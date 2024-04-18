@@ -8,7 +8,7 @@ import {
 } from "../../subMod/siyuanPlugin-common/component/blockEle";
 
 import { ISiyuan } from "../../subMod/siyuanPlugin-common/types/global-siyuan";
-import { createSourceId, resetId } from "../domOperate";
+import { createDomMemo, resetId, EAttrClass, getDomMemo } from "../domOperate";
 import { Ref, ref } from "vue";
 declare const siyuan: ISiyuan;
 const props = defineProps<{
@@ -16,37 +16,60 @@ const props = defineProps<{
   data: Data[];
 }>();
 const protyle: Ref<Protyle> = ref(null);
-const buildButton = (label: string, icon: string) => {
+const buildButton = (label: string, icon: string, func: Function) => {
   const button = document.createElement("button");
   const breadcrumb = protyle.value.protyle.element.querySelector(
     ".protyle-breadcrumb"
   );
   breadcrumb.querySelector(".block__icon.fn__flex-center").before(button);
-  button.outerHTML = `<button class="block__icon fn__flex-center ariaLabel" aria-label="${label}" >
-    <svg><use xlink:href="#${icon}"></use></svg>
-    </button>`;
+  button.innerHTML = `<svg><use xlink:href="#${icon}"></use></svg>`;
+  button.setAttribute("aria-label", label);
+  button.className = "block__icon fn__flex-center ariaLabel";
+  button.addEventListener("click", () => {
+    func();
+  });
   return button;
 };
 const isSuperBlock = (selectBlock: Element) => {
+  if (!selectBlock) {
+    return false;
+  }
+  if (!selectBlock.parentElement) {
+    return false;
+  }
   return (
     selectBlock.getAttribute("data-type") === "NodeSuperBlock" &&
     selectBlock.parentElement.classList.contains("protyle-wysiwyg")
   );
 };
-const getNextChange = () => {
-  let selectBlock = window.getSelection().anchorNode.parentElement;
+const getNextChange = (forward: boolean = true) => {
+  let selection = window.getSelection();
+  let selectBlock = selection.anchorNode.parentElement;
   while (!isSuperBlock(selectBlock) && selectBlock.parentElement) {
     selectBlock = selectBlock.parentElement;
   }
-  let nextBlock=selectBlock.nextSibling as Element
-  while(nextBlock){
-    if(nextBlock.querySelector("")){
-
+  if (!isSuperBlock(selectBlock)) {
+    return;
+  }
+  let nextBlock = selectBlock;
+  while (nextBlock) {
+    nextBlock = forward
+      ? (nextBlock.nextElementSibling as HTMLElement)
+      : (nextBlock.previousElementSibling as HTMLElement);
+    if (nextBlock && !getDomMemo(nextBlock, EAttrClass.noDiff)) {
+      break;
     }
   }
+  if (!nextBlock) {
+    return;
+  }
   protyle.value.protyle.contentElement.scrollTo({
-    top: selectBlock.offsetTop,
+    top: nextBlock.offsetTop,
   });
+  selection.removeAllRanges();
+  const range = document.createRange();
+  range.setStart(nextBlock.querySelector("[contenteditable]"), 0);
+  selection.addRange(range);
 };
 const updateProtyle = async (data: Data[]) => {
   if (!data || data.length == 0) {
@@ -64,7 +87,6 @@ const updateProtyle = async (data: Data[]) => {
     keepCursor: false,
     async afterOpen() {},
   });
-  //console.log("tab", tab);
   protyle.value = new Protyle(siyuan.ws.app, tab.panelElement, {
     after(protyle) {
       //?虽然没什么作用但是必须要有
@@ -76,11 +98,9 @@ const updateProtyle = async (data: Data[]) => {
     await sleep(150);
   }
 
-  //console.log(protyle);
   protyle.value.protyle.element.classList.add("plugin-diff");
-  //buildButton("下一个更改", "iconDown");
-  //buildButton("上一个更改", "iconUp");
-  //console.log("protyle", protyle);
+  buildButton("下一个更改", "iconDown", () => getNextChange(true));
+  buildButton("上一个更改", "iconUp", () => getNextChange(false));
   let preSourceId = "";
   for (let item of data) {
     const diff = item.diffEle || buildParaBlock("");
@@ -96,7 +116,10 @@ const updateProtyle = async (data: Data[]) => {
       merge.outerHTML,
     ]);
     if (!item.source) {
-      createSourceId(superBlock, preSourceId, true);
+      createDomMemo(superBlock, preSourceId, EAttrClass.preSource);
+    }
+    if (item.isNodiff) {
+      createDomMemo(superBlock, "无更改", EAttrClass.noDiff);
     }
     protyle.value.protyle.wysiwyg.element.appendChild(superBlock);
     if (item.source) {

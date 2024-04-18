@@ -10,10 +10,11 @@ import {
 import { NodeType } from "../subMod/siyuanPlugin-common/types/siyuan-api";
 import "./element.css";
 import {
-  getSourceId,
-  removeSourceId,
+  EAttrClass,
+  getDomMemo,
+  removeDomMemo,
   resetId,
-  setSourceId,
+  setDomMemo,
 } from "./domOperate";
 const STORAGE_NAME = "menu-config";
 //const DOCK_TYPE = "dock_tab";
@@ -70,7 +71,7 @@ export default class PluginDiff extends Plugin {
   }: {
     detail: { menu: Menu; blockElements: [HTMLElement]; protyle: IProtyle };
   }) => {
-    console.log(detail);
+    //console.log(detail);
     try {
       detail.protyle.element.classList;
     } catch (error) {
@@ -128,7 +129,7 @@ export default class PluginDiff extends Plugin {
           continue;
         }
         //*获取插入位置
-        const preSourceId = getSourceId(item, true);
+        const preSourceId = getDomMemo(item, EAttrClass.preSource);
         if (!preSourceId) {
           continue;
         }
@@ -147,9 +148,9 @@ export default class PluginDiff extends Plugin {
         if (!nextItem || !currentId) {
           continue;
         }
-        setSourceId(nextItem, currentId, true);
+        setDomMemo(nextItem, currentId, EAttrClass.preSource);
         //*修正文档显示错误
-        removeSourceId(item, true);
+        removeDomMemo(item, EAttrClass.preSource);
         const parent = item.parentElement;
         item.firstElementChild.replaceWith(
           parent.querySelector(`[data-node-id='${currentId}']`)
@@ -158,7 +159,7 @@ export default class PluginDiff extends Plugin {
     };
     if (
       detail.blockElements.some((e) => {
-        return getSourceId(e, true);
+        return getDomMemo(e, EAttrClass.preSource);
       })
     ) {
       detail.menu.addItem({
