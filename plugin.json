@@ -2,7 +2,7 @@
   "name": "siyuan-plugin-diff",
   "author": "dualwind",
   "url": "https://github.com/etchnight/siyuan-plugin-diff",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "minAppVersion": "3.0.0",
   "backends": ["windows", "linux", "darwin", "ios", "android"],
   "frontends": [

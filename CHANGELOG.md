@@ -1,3 +1,24 @@
+## [0.2.3](https://github.com/etchnight/siyuan-plugin-diff/compare/v0.2.2...v0.2.3) (2024-04-18)
+
+
+### Bug Fixes
+
+* 更改选定的文档后不应该自动触发更新 ([d24ae4e](https://github.com/etchnight/siyuan-plugin-diff/commit/d24ae4ef4a8e69ce6daf8cf3d6c57d86546564c4))
+* 界面优化 ([38389ed](https://github.com/etchnight/siyuan-plugin-diff/commit/38389eded129f1ceb0241d373096c1265f4b9a24))
+* 修复已获取数据但未传递到protyle组件的问题 ([c669788](https://github.com/etchnight/siyuan-plugin-diff/commit/c669788c24ad4a1ec4723ffef0f649d835697d03))
+
+
+### Features
+
+* 增加上下移动至更改处按钮 ([ca9dd46](https://github.com/etchnight/siyuan-plugin-diff/commit/ca9dd4616c22abd5c987dd59f5584ee4891fae93))
+
+
+### Performance Improvements
+
+* 使用diff-dom进行预检查，对长文档可以优化性能 ([79c62cd](https://github.com/etchnight/siyuan-plugin-diff/commit/79c62cd66d9bc99400bec0cc325da018c0c10f42))
+
+
+
 ## [0.2.2](https://github.com/etchnight/siyuan-plugin-diff/compare/v0.2.1...v0.2.2) (2024-04-16)
 
 
