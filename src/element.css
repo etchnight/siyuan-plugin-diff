@@ -1,10 +1,28 @@
+/** popover显示 */
 div.protyle-hint.b3-list.b3-list--background.block-autocomplete.el-popper {
   width: 400px !important;
+  overflow: visible;
 }
+#commonMenu[data-name="PluginDiff"] .b3-menu__items {
+  overflow: visible;
+}
+/** 颜色替换*/
 #plugin-diff,
-#plugin-diff .el-button--primary {
+#plugin-diff .el-button--primary,
+#plugin-diff .el-input__wrapper {
   --el-text-color-regular: var(--b3-theme-on-background);
+
   --el-button-bg-color: var(--b3-theme-primary);
   --el-button-border-color: var(--b3-theme-primary);
   --el-button-text-color: var(--b3-theme-on-primary);
+
+  --el-disabled-text-color: var(--b3-theme-on-surface);
+  --el-disabled-bg-color: var(--b3-theme-surface);
+
+  --el-input-bg-color: var(--b3-theme-background);
+  --el-input-text-color: var(--b3-theme-background);
+}
+
+#plugin-diff .el-input__wrapper {
+  border-color: var(--b3-theme-primary);
 }

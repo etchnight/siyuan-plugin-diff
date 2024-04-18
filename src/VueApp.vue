@@ -3,7 +3,6 @@
     :model="form"
     label-width="auto"
     :inline="false"
-    style="width: 400px; height: 350px"
     @click.stop="(e) => e /**阻止窗口关闭 */"
   >
     <el-form-item label="原文档">
