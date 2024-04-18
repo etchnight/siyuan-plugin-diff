@@ -34,6 +34,7 @@
   <Protyle
     :data="data"
     :tab-title="form.sourceTitle + '←→' + form.targetTitle"
+    ref="protyle"
   />
 </template>
 
@@ -59,7 +60,7 @@ export type Data = {
   duplicateId?: BlockId;
 };
 const data = ref<Data[]>([]);
-// do not use same name with ref
+const protyle = ref(null);
 const form = ref({
   source: "",
   sourceTitle: "",
@@ -228,6 +229,7 @@ const main = async () => {
     Array.from(sourceBlockList),
     Array.from(targetBlockList)
   );
+  protyle.value.updateProtyle();
   /*   const outputDoc = await duplicateDoc(form.value.source);
   const outputBlockList = (await getBlockList(
     outputDoc.id

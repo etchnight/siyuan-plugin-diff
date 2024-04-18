@@ -1,7 +1,6 @@
 <template></template>
 <script lang="ts" setup>
-import { onUpdated } from "vue";
-import { App, type Lute as LUTE, Protyle, openTab } from "siyuan";
+import { App, Protyle, openTab } from "siyuan";
 import { type Data } from "../VueApp.vue";
 import {
   buildParaBlock,
@@ -16,7 +15,7 @@ const props = defineProps<{
   tabTitle: string;
 }>();
 
-onUpdated(async () => {
+const updateProtyle = async () => {
   if (!props.data || props.data.length == 0) {
     return;
   }
@@ -65,10 +64,13 @@ onUpdated(async () => {
       preSourceId = item.source;
     }
   }
-});
+};
 function sleep(timeout: number) {
   return new Promise((resolve, _reject) => {
     setTimeout(resolve, timeout);
   });
 }
+defineExpose({
+  updateProtyle,
+});
 </script>
