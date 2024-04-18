@@ -6,11 +6,20 @@
 
 该插件的初衷是为了解决外部导入的内容（如网页剪藏等）有更新，但在思源笔记内的相应笔记已进行了链接、样式修改等操作，需要将新导入的文档合并到原文档的情况。故目前合并建议为修改原文档，而不考虑新导入文档的更新问题。
 
-> [!WARNING]
->
-> 该项目还处在早期阶段，存在不稳定性，请谨慎使用。请特别注意目前问题部分。
->
-> 生成的比较视图中，每个超级块最左侧块，对其的修改将同步到原文档对应块，请特别注意。
+
+<div class="markdown-alert markdown-alert-warning" dir="auto" style="padding: 0.5rem 1rem; margin-bottom: 16px; color: inherit; border-left: 0.25em solid; border-left-color: #9e6a03;">
+      <p class="markdown-alert-title" dir="auto" style="margin-top: 0; display: flex; font-weight: 500; align-items: center; line-height: 1; color: #d29922;">
+        <svg class="octicon octicon-alert mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true" style="display: inline-block; vertical-align: text-bottom; fill: currentColor; overflow: visible; margin-right: 0.5rem;">
+          <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" class=""/></svg>Warning
+      </p>
+
+   <p dir="auto" class style="margin-bottom: 0;">
+        该项目还处在早期阶段，存在不稳定性，请谨慎使用。请特别注意目前问题部分。
+   </p>
+      <p dir="auto" class>
+   生成的比较视图中，每个超级块最左侧块，对其的修改将同步到原文档对应块，请特别注意。
+   </p>
+</div>
 
 ## 使用方法
 
@@ -35,4 +44,4 @@
 ## 目前问题
 
 - 没有使用动态加载，比较超大文档可能会卡顿
-- 比较视图使用的是Protyle（思源文档编辑器界面），但是里面的块均是虚拟的，即本地文件和数据库中不存在真实的比较文档，在其中进行编辑可能存在风险，虽然目前尚未发现较为严重的问题
+- 比较视图使用的是 Protyle（思源文档编辑器界面），但是里面的块均是虚拟的，即本地文件和数据库中不存在真实的比较文档，在其中进行编辑可能存在风险，虽然目前尚未发现较为严重的问题
