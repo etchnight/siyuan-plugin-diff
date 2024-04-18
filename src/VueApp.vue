@@ -32,7 +32,6 @@
     </el-form-item>
   </el-form>
   <Protyle
-    :data="data"
     :tab-title="form.sourceTitle + '←→' + form.targetTitle"
     ref="protyle"
   />
@@ -49,6 +48,7 @@ import { BlockId } from "../subMod/siyuanPlugin-common/types/siyuan-api";
 import { queryBlockById } from "../subMod/siyuanPlugin-common/siyuan-api/query";
 import { DiffBlock } from "./diffBlock";
 import { DiffLine } from "./diffLine";
+import { showMessage } from "siyuan";
 //const tabTitle = ref("");
 export type Data = {
   source?: BlockId;
@@ -59,7 +59,7 @@ export type Data = {
   mergeEle?: Element;
   duplicateId?: BlockId;
 };
-const data = ref<Data[]>([]);
+//const data = ref<Data[]>([]);
 const protyle = ref(null);
 const form = ref({
   source: "",
@@ -104,6 +104,7 @@ const getBlockContentList = (item: Element): Element[] => {
   );
 };
 const buildData = (oneList: Element[], otherList: Element[]) => {
+  showMessage("正在进行差异检查...");
   const diffBlock = new DiffBlock();
   const diffLine = new DiffLine(true);
   let data: Data[] = diffBlock.patch(oneList, otherList);
@@ -219,30 +220,18 @@ const buildData = (oneList: Element[], otherList: Element[]) => {
   );
 };
 const main = async () => {
+  showMessage("正在获取文档...");
   const sourceBlockList = (await getBlockList(
     form.value.source
   )) as NodeListOf<HTMLElement>;
   const targetBlockList = (await getBlockList(
     form.value.target
   )) as NodeListOf<HTMLElement>;
-  data.value = buildData(
+  const data = buildData(
     Array.from(sourceBlockList),
     Array.from(targetBlockList)
   );
-  protyle.value.updateProtyle();
-  /*   const outputDoc = await duplicateDoc(form.value.source);
-  const outputBlockList = (await getBlockList(
-    outputDoc.id
-  )) as NodeListOf<HTMLElement>;
-  let index = 0;
-  data.value.forEach((e, _i) => {
-    if (!e.sourceEle) {
-      return;
-    }
-    index++;
-    e.duplicateId = getId(outputBlockList[index]);
-  }); */
-  //tabTitle.value = `←→`; //*触发更新动作
+  protyle.value.updateProtyle(data);
 };
 </script>
 <style></style>

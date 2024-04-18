@@ -1,6 +1,6 @@
 <template></template>
 <script lang="ts" setup>
-import { App, Protyle, openTab } from "siyuan";
+import { App, Protyle, openTab, showMessage } from "siyuan";
 import { type Data } from "../VueApp.vue";
 import {
   buildParaBlock,
@@ -11,14 +11,14 @@ import { ISiyuan } from "../../subMod/siyuanPlugin-common/types/global-siyuan";
 import { createSourceId, resetId } from "../domOperate";
 declare const siyuan: ISiyuan;
 const props = defineProps<{
-  data: Data[];
   tabTitle: string;
 }>();
 
-const updateProtyle = async () => {
-  if (!props.data || props.data.length == 0) {
+const updateProtyle = async (data: Data[]) => {
+  if (!data || data.length == 0) {
     return;
   }
+  showMessage("正在组织输出...");
   const tab = await openTab({
     app: siyuan.ws.app as App,
     custom: {
@@ -43,7 +43,7 @@ const updateProtyle = async () => {
   protyle.protyle.element.classList.add("plugin-diff");
   //console.log("protyle", protyle);
   let preSourceId = "";
-  for (let item of props.data) {
+  for (let item of data) {
     const diff = item.diffEle || buildParaBlock("");
     resetId(diff);
     diff.querySelectorAll("[data-node-id]").forEach((e) => resetId(e));

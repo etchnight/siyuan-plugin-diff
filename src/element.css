@@ -12,15 +12,15 @@ div.protyle-hint.b3-list.b3-list--background.block-autocomplete.el-popper {
 #plugin-diff .el-input__wrapper {
   --el-text-color-regular: var(--b3-theme-on-background);
 
+  --el-button-text-color: var(--b3-theme-on-primary);
   --el-button-bg-color: var(--b3-theme-primary);
   --el-button-border-color: var(--b3-theme-primary);
-  --el-button-text-color: var(--b3-theme-on-primary);
 
   --el-disabled-text-color: var(--b3-theme-on-surface);
   --el-disabled-bg-color: var(--b3-theme-surface);
 
+  --el-input-text-color: var(--b3-them-on-background);
   --el-input-bg-color: var(--b3-theme-background);
-  --el-input-text-color: var(--b3-theme-background);
 }
 
 #plugin-diff .el-input__wrapper {
