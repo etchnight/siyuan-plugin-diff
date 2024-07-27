@@ -1,3 +1,12 @@
+## [0.2.4](https://github.com/etchnight/siyuan-plugin-diff/compare/v0.2.3...v0.2.4) (2024-07-27)
+
+
+### Bug Fixes
+
+* 修复输出中挂件元素错误引起刷新 ([79f862e](https://github.com/etchnight/siyuan-plugin-diff/commit/79f862e495d432a6ac1753f02d93b6e66f928b3a))
+
+
+
 ## [0.2.3](https://github.com/etchnight/siyuan-plugin-diff/compare/v0.2.2...v0.2.3) (2024-04-18)
 
 
