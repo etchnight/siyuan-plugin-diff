@@ -8,5 +8,6 @@ dev
 dist
 build
 tmp
+test
 
 */test.js

@@ -102,6 +102,7 @@ const updateProtyle = async (data: Data[]) => {
   buildButton("下一个更改", "iconDown", () => getNextChange(true));
   buildButton("上一个更改", "iconUp", () => getNextChange(false));
   let preSourceId = "";
+  //let count = 0;
   for (let item of data) {
     const diff = item.diffEle || buildParaBlock("");
     resetId(diff);
@@ -110,17 +111,33 @@ const updateProtyle = async (data: Data[]) => {
     resetId(merge);
     merge.querySelectorAll("[data-node-id]").forEach((e) => resetId(e));
     const source = item.sourceEle || buildParaBlock("");
-    let superBlock = buildSuperBlock("col", [
-      source.outerHTML,
-      diff.outerHTML,
-      merge.outerHTML,
-    ]);
+    let superBlock: HTMLElement;
+    if (source.getAttribute("data-type") === "NodeWidget") {
+      superBlock = buildSuperBlock("col", [
+        buildParaBlock("挂件不显示").outerHTML,
+        buildParaBlock("挂件不显示").outerHTML,
+        buildParaBlock("挂件不显示").outerHTML,
+      ]);
+    } else {
+      superBlock = buildSuperBlock("col", [
+        source.outerHTML,
+        diff.outerHTML,
+        merge.outerHTML,
+      ]);
+    }
     if (!item.source) {
       createDomMemo(superBlock, preSourceId, EAttrClass.preSource);
     }
     if (item.isNodiff) {
       createDomMemo(superBlock, "无更改", EAttrClass.noDiff);
     }
+    /*出现错误用以下代码调试
+    await sleep(2000);
+    count++;
+     if (count > 4) {
+      console.log(superBlock.innerHTML);
+      break;
+    } */
     protyle.value.protyle.wysiwyg.element.appendChild(superBlock);
     if (item.source) {
       preSourceId = item.source;
